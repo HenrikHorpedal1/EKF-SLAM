@@ -1,4 +1,5 @@
 # %% Imports
+from matplotlib.lines import lineStyles
 from plotting import ellipse
 from EKFSLAM import EKFSLAM
 from typing import List, Optional
@@ -98,13 +99,13 @@ def main():
     M = len(landmarks)
 
     # %% Initilize
-    Q = np.diag([0.1, 0.1, 1 * np.pi / 180]) ** 2 # TODO tune
-    R = np.diag([0.1, 1 * np.pi / 180]) ** 2 # TODO tune
+    Q = np.diag([0.07, 0.07, 0.6 * np.pi / 180]) ** 2 # TODO tune
+    R = np.diag([0.1,0.7* np.pi / 180]) ** 2 # TODO tune
 
     doAsso = True
 
     JCBBalphas = np.array(
-        [0.001, 0.0001] # TODO tune
+        [1e-25, 1e-25] # TODO tune
     )  # first is for joint compatibility, second is individual
 
     slam = EKFSLAM(Q, R, do_asso=doAsso, alphas=JCBBalphas)
@@ -210,21 +211,22 @@ def main():
 
     fig2, ax2 = plt.subplots(num=2, clear=True)
     # landmarks
-    ax2.scatter(*landmarks.T, c="r", marker="^")
-    ax2.scatter(*lmk_est_final.T, c="b", marker=".")
+    ax2.scatter(*landmarks.T, c="r", marker="^", label="gt landmarks" )
     # Draw covariance ellipsis of measurements
     for l, lmk_l in enumerate(lmk_est_final):
         idxs = slice(3 + 2 * l, 3 + 2 * l + 2)
         rI = P_hat[N - 1][idxs, idxs]
         el = ellipse(lmk_l, rI, 5, 200)
-        ax2.plot(*el.T, "b")
+        ax2.plot(*el.T, c = "purple")
 
-    ax2.plot(*poseGT.T[:2], c="r", label="gt")
-    ax2.plot(*pose_est.T[:2], c="g", label="est")
-    ax2.plot(*ellipse(pose_est[-1, :2], P_hat[N - 1][:2, :2], 5, 200).T, c="g")
-    ax2.set(title="results", xlim=(mins[0], maxs[0]), ylim=(mins[1], maxs[1]))
+    ax2.scatter(*lmk_est_final.T, c="b", marker=".", label="estimated landmarks")
+    ax2.plot(*poseGT.T[:2], c="r", label="gt pose")
+    ax2.plot(*pose_est.T[:2], c="g", linestyle= "--",label="estimated pose")
+    ax2.plot(*ellipse(pose_est[-1, :2], P_hat[N - 1][:2, :2], 5, 200).T, label = "final state covaraince", c="lime")
+    ax2.set(title="Map and trajectory", xlim=(mins[0], maxs[0]), ylim=(mins[1], maxs[1]))
     ax2.axis("equal")
     ax2.grid()
+    ax2.legend()
 
     # %% Consistency
 
@@ -283,6 +285,10 @@ def main():
 
     fig5.tight_layout()
 
+
+
+
+
     # %% Movie time
 
     if playMovie:
@@ -316,7 +322,11 @@ def main():
                     rI = P_hat[k][idxs, idxs]
                     el = ellipse(lmk_l, rI, 5, 200)
                     ax_movie.plot(*el.T, "b")
-
+                timestep_value = k
+                ax_movie.text(
+                    0.05, 0.95, f'Timestep: {timestep_value}', 
+                    transform=ax_movie.transAxes, fontsize=12, verticalalignment='top'
+                )
                 camera.snap()
             animation = camera.animate(interval=100, blit=True, repeat=True)
             print("playing movie")
