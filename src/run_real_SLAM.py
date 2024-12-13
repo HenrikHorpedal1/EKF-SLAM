@@ -110,7 +110,7 @@ def main():
 
     car = Car(L, H, a, b)
 
-    sigmas = 0.025 * np.array([0.0001, 0.00005, 6 * np.pi / 180])  # TODO tune
+    sigmas = 0.00001 * np.array([0.0001, 0.00005, 10 * np.pi / 180])  # TODO tune
     CorrCoeff = np.array([[1, 0, 0], [0, 1, 0.9], [0, 0.9, 1]])
     Q = np.diag(sigmas) @ CorrCoeff @ np.diag(sigmas)
     R = np.diag([0.1, 1 * np.pi / 180]) ** 2  # TODO tune
@@ -144,7 +144,7 @@ def main():
     mk = mk_first
     t = timeOdo[0]
 
-    # %%  run
+# %%  run
     N = 5000  # K
 
     doPlot = False
@@ -237,10 +237,13 @@ def main():
     insideCI = (CInorm[:mk, 0] <= NISnorm[:mk]) * \
         (NISnorm[:mk] <= CInorm[:mk, 1])
 
+    ANIS = NISnorm[:mk].mean()
     fig3, ax3 = plt.subplots(num=3, clear=True)
     ax3.plot(CInorm[:mk, 0], "--")
     ax3.plot(CInorm[:mk, 1], "--")
     ax3.plot(NISnorm[:mk], lw=0.5)
+    ax3.axhline(ANIS, color="r", linestyle="--", label=f"ANIS = {ANIS:.2f}")
+    ax3.legend()
 
     ax3.set_title(f"NIS, {insideCI.mean()*100:.2f}% inside CI")
 
@@ -262,11 +265,31 @@ def main():
 
     # %%
     fig6, ax6 = plt.subplots(num=6, clear=True)
-    ax6.scatter(*eta[3:].reshape(-1, 2).T, color="r", marker="x")
-    ax6.plot(*xupd[mk_first:mk, :2].T)
+    ax6.scatter(*eta[3:].reshape(-1, 2).T, color="green", marker="x")
+    ax6.plot(*xupd[mk_first:mk, :2].T, label="estimated trajectory")
+    ax6.scatter(
+            Lo_m[timeGps < timeOdo[N - 1]],
+            La_m[timeGps < timeOdo[N - 1]],
+            c="r",
+            marker=".",
+            label="GPS",
+        )
     ax6.set(
         title=f"Steps {k}, laser scans {mk-1}, landmarks {len(eta[3:])//2},\nmeasurements {z.shape[0]}, num new = {np.sum(a[mk] == -1)}"
     )
+
+    # fig7, ax7 = plt.subplots(num=7, clear=True)
+    # ax7.scatter(
+    #         Lo_m[timeGps < timeOdo[N - 1]],
+    #         La_m[timeGps < timeOdo[N - 1]],
+    #         c="r",
+    #         marker=".",
+    #         label="GPS",
+    #     )
+    # ax7.plot(*xupd[mk_first:mk, :2].T, label="EKF SLAM Estimated Trajectory", color="green")
+    # ax7.set(
+    #     title=f"GPS vs Estimated Trajectory"
+    #)
     plt.show()
 
 

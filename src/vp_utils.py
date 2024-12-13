@@ -81,8 +81,7 @@ def detectTrees(scan):
 
             if L2 > 3:
                 L2m = L2 - 3
-                dx2 = x2[3:L2] - x2u[0:L2m]
-                dy2 = y2[3:L2] - y2u[0:L2m]
+                dx2 = x2[3:L2] - x2u[0:L2m] dy2 = y2[3:L2] - y2u[0:L2m]
 
                 dl2 = dx2 * dx2 + dy2 * dy2
                 ii3 = np.flatnonzero(dl2 < M3c)
@@ -197,7 +196,7 @@ def detectTrees(scan):
     return z
 
 
-def odometry(ve, alpha, dt, car):
+ def odometry(ve, alpha, dt, car):
     vc = ve / (1 - car.H * np.tan(alpha) / car.L)
     dp = dt * vc * np.tan(alpha) / car.L
     dx = dt * vc * np.sinc(dp / np.pi)
